@@ -1,0 +1,3 @@
+Source: sql.js 1.14.2 dist/sql-asm.js (locked npm package).
+Generated with esbuild --bundle --platform=browser --format=esm --define:globalThis.process=undefined --external:node:* --minify.
+License included in SQL-JS-LICENSE.txt.

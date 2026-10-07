@@ -1,0 +1,10 @@
+import {runtimeContext} from '../../native/context.ts';
+export async function identity(){return runtimeContext().user;}
+export function isOffice(user:{userId:string;authId?:string}|string){const c=runtimeContext();const list=typeof user==='string'?c.secrets.STAFF_EMAILS:c.secrets.STAFF_AUTH_IDS;return (list||'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean).includes((typeof user==='string'?user:user.authId||user.userId).toLowerCase());}
+export function db(){return runtimeContext().database;}
+export function bucket(){return runtimeContext().objects;}
+// Requests are reconstructed exclusively by the authenticated actor transport.
+export function sameOrigin(request:Request){return request.headers.get('origin')==='https://always-nursing.internal'&&new URL(request.url).origin==='https://always-nursing.internal';}
+export function fail(status:number,message:string){return Response.json({error:message},{status,headers:{'Cache-Control':'no-store'}});}
+export async function limitedBody(request:Request,limit:number){if(Number(request.headers.get('content-length')||0)>limit)throw new Error('Request is too large');const reader=request.body?.getReader();if(!reader)return new Uint8Array();const chunks:Uint8Array[]=[];let total=0;for(;;){const {done,value}=await reader.read();if(done)break;total+=value.length;if(total>limit){await reader.cancel();throw new Error('Request is too large')}chunks.push(value)}const bytes=new Uint8Array(total);let at=0;for(const chunk of chunks){bytes.set(chunk,at);at+=chunk.length}return bytes;}
+export async function inactiveGuard(user:{userId:string;email:string;authId?:string}){if(isOffice(user))return null;try{const row=await db().prepare("SELECT status FROM employee_status WHERE user_id=?").bind(user.userId).first<{status:string}>();if(row&&(row.status==='quit'||row.status==='terminated'))return Response.json({error:"Your account is inactive. Only your basic profile, employment dates, paystubs and W-2s are available.",inactive:true,redirect:"/inactive"},{status:403,headers:{"Cache-Control":"no-store"}});return null}catch{return fail(503,"Account access could not be verified. Please retry.")}}

@@ -1,0 +1,5 @@
+import {runtimeContext} from "../../../native/context.ts";
+import {db} from '../security.ts';
+export async function tokenHash(token:string){const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(token));return Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('')}
+export async function ensureCustomerDemoLink(){const env=runtimeContext().secrets,hash=env.CUSTOMER_DEMO_HASH,expiresAt=Number(env.CUSTOMER_DEMO_EXPIRES);if(!hash||!/^[a-f0-9]{64}$/.test(hash)||!Number.isFinite(expiresAt)||expiresAt<=Date.now())return;await db().prepare("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)").bind('demo_link:'+hash,JSON.stringify({label:'Potential Customer Preview',active:true,expiresAt})).run()}
+export async function validDemoToken(token:string){if(!/^[a-f0-9]{64}$/.test(token))return false;await ensureCustomerDemoLink();const hash=await tokenHash(token),row=await db().prepare("SELECT value FROM settings WHERE key=?").bind('demo_link:'+hash).first<{value:string}>();if(!row)return false;const x=JSON.parse(row.value);return x.active===true&&Number.isFinite(x.expiresAt)&&x.expiresAt>Date.now()}

@@ -1,0 +1,3 @@
+export type FacilityContract={id:string;filename:string;version:string;bytes:number;uploadedAt:number;objectKey:string;backupKey:string};
+export function contractSummary(c:FacilityContract){return {id:c.id,filename:c.filename,version:c.version,bytes:c.bytes,uploadedAt:c.uploadedAt}}
+export function validateContractPdf(bytes:Uint8Array){if(bytes.length<8||bytes.length>5_000_000)throw new Error('Choose a PDF under 5 MB');if(new TextDecoder().decode(bytes.slice(0,5))!=='%PDF-')throw new Error('Choose a PDF file');if(!new TextDecoder().decode(bytes.slice(-2048)).includes('%%EOF'))throw new Error('The PDF appears incomplete. Export it again and retry.')}

@@ -1,0 +1,3 @@
+import {db} from './security.ts';
+import type {AbsenceInfraction} from '../../lib/no-call-no-show.ts';
+export async function absenceInfractions(office:boolean,userId:string){const rows=await db().prepare("SELECT r.id,r.user_id,COALESCE(json_extract(s.data,'$.start'),r.submitted_at) AS infraction_at FROM ncns_incidents r LEFT JOIN assignments a ON a.id=r.id LEFT JOIN live_shifts s ON s.id=a.shift_id WHERE r.status='active' AND (?=1 OR r.user_id=?) LIMIT 10001").bind(office?1:0,userId).all<AbsenceInfraction>();if(rows.results.length>10000)throw new Error('Too many absence records to evaluate safely');return rows.results;}

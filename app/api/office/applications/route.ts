@@ -1,0 +1,3 @@
+import {identity,isOffice,db,fail} from "../../security.ts";
+export const runtime="edge";
+export async function GET(){const user=await identity();if(!user||!isOffice(user))return fail(403,"Office access required");try{const rows=await db().prepare("SELECT user_id,email,status,data,updated_at FROM applications ORDER BY updated_at DESC LIMIT 100").all();const docs=await db().prepare("SELECT id,user_id,kind,filename,created_at FROM documents ORDER BY created_at DESC LIMIT 300").all();return Response.json({applications:rows.results.map((r:any)=>({...r,data:JSON.parse(String(r.data))})),documents:docs.results},{headers:{"Cache-Control":"no-store"}})}catch{return fail(503,"Records temporarily unavailable")}}

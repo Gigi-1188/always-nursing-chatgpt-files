@@ -1,0 +1,1 @@
+export default function BrandLogo(){return <svg className="agency-logo-picture" viewBox="220 274 685 550" role="img" aria-label="Always Nursing Staffing Agency Logo"><image href="/always-nursing-logo.png" width="1080" height="1350"/></svg>}
